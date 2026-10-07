@@ -1,0 +1,20 @@
+{
+  "name": "mac-space-analyzer",
+  "version": "1.0.0",
+  "description": "Hierarchical macOS folder space analyzer",
+  "type": "module",
+  "bin": {
+    "space-analyzer": "./cli.js"
+  },
+  "scripts": {
+    "start": "node cli.js",
+    "web": "node server.js",
+    "test": "node test.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "keywords": ["space", "analyzer", "macos", "hierarchy"],
+  "author": "",
+  "license": "ISC"
+}
