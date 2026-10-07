@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mac Space Analyzer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      font-size: 1.1em;
+      opacity: 0.9;
+    }
+
+    .controls {
+      padding: 20px 30px;
+      background: #f5f5f5;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 10px;
+      flex: 1;
+      min-width: 300px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 10px 15px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 1em;
+      transition: border-color 0.3s;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    button {
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .content {
+      padding: 30px;
+      min-height: 400px;
+    }
+
+    .tree {
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 0.95em;
+      line-height: 1.6;
+    }
+
+    .tree-node {
+      margin-left: 20px;
+      padding: 5px 0;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .tree-node:hover {
+      background: #f9f9f9;
+      border-radius: 4px;
+      padding-left: 5px;
+      margin-left: 15px;
+    }
+
+    .tree-toggle {
+      display: inline-block;
+      width: 16px;
+      text-align: center;
+      color: #667eea;
+      font-weight: bold;
+      margin-right: 5px;
+    }
+
+    .tree-icon {
+      display: inline-block;
+      width: 16px;
+      text-align: center;
+      margin-right: 5px;
+    }
+
+    .folder-icon::before {
+      content: "📁";
+    }
+
+    .file-icon::before {
+      content: "📄";
+    }
+
+    .tree-name {
+      color: #333;
+      font-weight: 500;
+    }
+
+    .tree-size {
+      color: #999;
+      font-size: 0.9em;
+      margin-left: 10px;
+    }
+
+    .tree-children {
+      display: none;
+      margin-left: 10px;
+    }
+
+    .tree-children.expanded {
+      display: block;
+    }
+
+    .stats {
+      background: #f9f9f9;
+      padding: 15px 30px;
+      border-top: 1px solid #e0e0e0;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .stat-label {
+      color: #999;
+      font-size: 0.9em;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .stat-value {
+      color: #667eea;
+      font-size: 1.5em;
+      font-weight: bold;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+    }
+
+    .loading::after {
+      content: "";
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      margin-left: 10px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .error {
+      color: #e74c3c;
+      padding: 20px;
+      background: #fadbd8;
+      border-radius: 6px;
+      border-left: 4px solid #e74c3c;
+    }
+
+    .root-node {
+      background: #f0f4ff;
+      padding: 15px;
+      border-radius: 8px;
+      border: 2px solid #667eea;
+      margin-bottom: 20px;
+    }
+
+    .root-node .tree-toggle {
+      font-size: 1.2em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📊 Mac Space Analyzer</h1>
+      <p>Visualize folder sizes in a hierarchical tree view</p>
+    </div>
+
+    <div class="controls">
+      <div class="input-group">
+        <input type="text" id="pathInput" placeholder="Enter folder path (e.g., /Users/yourname/Documents)" value="">
+        <button onclick="analyzePath()">Analyze</button>
+      </div>
+      <button onclick="resetToHome()" style="background: #666;">Home</button>
+    </div>
+
+    <div class="content">
+      <div id="tree" class="tree"></div>
+    </div>
+
+    <div class="stats" id="stats" style="display: none;">
+      <div class="stat-item">
+        <div class="stat-label">Total Size</div>
+        <div class="stat-value" id="totalSize">-</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Items</div>
+        <div class="stat-value" id="itemCount">-</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Path</div>
+        <div class="stat-value" id="currentPath" style="font-size: 1em;">-</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentData = null;
+
+    function formatSize(bytes) {
+      const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+      let size = bytes;
+      let unitIndex = 0;
+      
+      while (size >= 1024 && unitIndex < units.length - 1) {
+        size /= 1024;
+        unitIndex++;
+      }
+      
+      return `${size.toFixed(2)} ${units[unitIndex]}`;
+    }
+
+    function countItems(node) {
+      if (!node.children) return 1;
+      return 1 + node.children.reduce((sum, child) => sum + countItems(child), 0);
+    }
+
+    function renderTree(node, isRoot = false) {
+      const hasChildren = node.children && node.children.length > 0;
+      const isDir = node.type === 'directory';
+      
+      let html = `<div class="tree-node ${isRoot ? 'root-node' : ''}">`;
+      
+      if (hasChildren) {
+        html += `<span class="tree-toggle" onclick="toggleNode(event)">▶</span>`;
+      } else {
+        html += `<span class="tree-toggle"></span>`;
+      }
+      
+      if (isDir || isRoot) {
+        html += `<span class="tree-icon folder-icon"></span>`;
+      } else {
+        html += `<span class="tree-icon file-icon"></span>`;
+      }
+      
+      html += `<span class="tree-name">${node.name}</span>`;
+      html += `<span class="tree-size">${formatSize(node.size)}</span>`;
+      
+      if (hasChildren) {
+        html += `<div class="tree-children">`;
+        node.children.forEach(child => {
+          html += renderTree(child);
+        });
+        html += `</div>`;
+      }
+      
+      html += `</div>`;
+      return html;
+    }
+
+    function toggleNode(event) {
+      event.stopPropagation();
+      const toggle = event.target;
+      const children = toggle.closest('.tree-node').querySelector('.tree-children');
+      
+      if (children) {
+        children.classList.toggle('expanded');
+        toggle.textContent = children.classList.contains('expanded') ? '▼' : '▶';
+      }
+    }
+
+    async function analyzePath() {
+      const path = document.getElementById('pathInput').value || process.env.HOME;
+      const treeDiv = document.getElementById('tree');
+      
+      treeDiv.innerHTML = '<div class="loading">Analyzing...</div>';
+      
+      try {
+        const response = await fetch(`/api/analyze?path=${encodeURIComponent(path)}`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to analyze path');
+        }
+        
+        const data = await response.json();
+        currentData = data;
+        
+        const html = renderTree(data, true);
+        treeDiv.innerHTML = html;
+        
+        document.getElementById('stats').style.display = 'flex';
+        document.getElementById('totalSize').textContent = formatSize(data.size);
+        document.getElementById('itemCount').textContent = countItems(data);
+        document.getElementById('currentPath').textContent = data.path;
+        
+        document.getElementById('pathInput').value = data.path;
+      } catch (error) {
+        treeDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+        document.getElementById('stats').style.display = 'none';
+      }
+    }
+
+    function resetToHome() {
+      document.getElementById('pathInput').value = '';
+      analyzePath();
+    }
+
+    window.addEventListener('load', () => {
+      setTimeout(analyzePath, 100);
+    });
+  </script>
+</body>
+</html>
